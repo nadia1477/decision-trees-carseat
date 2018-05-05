@@ -1,6 +1,7 @@
 import pandas as pd 
-import numpy, sys, tqdm
+import numpy, sys, tqdm, random
 from sklearn.metrics import mean_squared_error
+pd.set_option('expand_frame_repr', False)
 
 class Utils(object):
 
@@ -10,6 +11,7 @@ class Utils(object):
 		self.columnlist = list(self.dataset)
 		self.min_rss = None
 		self.min_chunk = None
+		self.splitFeatures = []
 		# enter hyperparameters
 		self.alpha = 0.25
 
@@ -57,10 +59,12 @@ class Utils(object):
 		columns = ["CompPrice",  "Income",  "Advertising",  "Population",  "Price",  "Age", "Education"]
 		chunks = list()
 		rssValues = list()
-		for column in tqdm.tqdm(columns):
-			t1, t2 = self.performSplit(train_data, column)
-			rssValues.extend((self.computeRSS(t1), self.computeRSS(t2)))
-			chunks.extend((t1, t2))
+		choice = random.randint(0, len(columns) - 1)
+
+		t1, t2 = self.performSplit(train_data, columns[choice])
+		rssValues.extend((self.computeRSS(t1), self.computeRSS(t2)))
+		chunks.extend((t1, t2))
+
 		# find min rss 
 		self.min_rss = numpy.argmin(rssValues)
 		self.min_chunk = chunks[self.min_rss]
@@ -79,6 +83,8 @@ def main ():
 	train, test = util.process(0.8)
 
 	util.recursiveSplit(train, 0)
+	
+	# for testing - no RSS computation - directly use left or right traversal and find median at the end
 
 		
 if __name__ == '__main__':
