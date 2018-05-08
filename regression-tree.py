@@ -1,19 +1,23 @@
 import pandas as pd 
+from pprint import pprint
 import numpy, sys, tqdm, random
 from sklearn.metrics import mean_squared_error
+
 pd.set_option('expand_frame_repr', False)
+
+MAX_HEIGHT = 5
+
+
 
 class Utils(object):
 
 	def __init__(self, path, targets):
 		self.dataset = pd.read_csv(filepath_or_buffer = path, header = 'infer')
 		self.target = targets
-		self.columnlist = list(self.dataset)
-		self.min_rss = None
-		self.min_chunk = None
-		self.splitFeatures = []
-		# enter hyperparameters
+		self.columnlist = ["CompPrice",  "Income",  "Advertising",  "Population",  "Price",  "Age", "Education"]
 		self.alpha = 0.25
+		self.height = 0
+		# self.baseNode = node()
 
 	def process (self, training_set_size):
 		# edge case -- 1
@@ -30,10 +34,7 @@ class Utils(object):
 	computeTarget = lambda self, chunk : chunk[self.target].median()
 	regularize = lambda self, data : self.computeRSS(data) + (self.alpha * len(data.columns.tolist()))
 
-
 	def performSplit (self, train_data, feature):
-		# apply split function near mean
-		# returns two sub trees
 		return train_data[train_data[feature] > train_data[feature].mean()], train_data[train_data[feature] < train_data[feature].mean()]
 
 	# pick min value out of this. 
@@ -41,36 +42,58 @@ class Utils(object):
 		# (true of each entry in chunk - median of chunk) ** 2
 		rss = 0.0
 		predicted_target = self.computeTarget(chunk)
-		for index, row in tqdm.tqdm(chunk.iterrows()):
+		for index, row in chunk.iterrows():
 			rss += numpy.power((row[self.target] - predicted_target), 2)
 		return rss 
 
-	def displayContents (self):
-		print(self.min_rss, self.min_chunk)
+	def recursiveSplit (self, chunk):
 
-
-	def recursiveSplit (self, train_data, count):
-
-		if len(train_data) < (0.025 * len(self.dataset)):
+		self.height += 1
+		# define stopping condition 
+		if chunk.shape[0] < (0.05 * self.dataset.shape[0]) or self.height == MAX_HEIGHT or chunk.empty:
 			return 0
 
-		self.displayContents()
-		# generate columns based on the best rss value
-		columns = ["CompPrice",  "Income",  "Advertising",  "Population",  "Price",  "Age", "Education"]
-		chunks = list()
-		rssValues = list()
-		choice = random.randint(0, len(columns) - 1)
+		random.shuffle(self.columnlist)
+		combinedRss = []
+		nodes = []
+		for feature in self.columnlist:
+			chunk1, chunk2 = self.performSplit(chunk, feature)
+			rss = self.computeRSS(chunk1) + self.computeRSS(chunk2)
+			combinedRss.append(rss)
+			single_node = node(chunk1, chunk2, feature)
+			nodes.append(single_node)
 
-		t1, t2 = self.performSplit(train_data, columns[choice])
-		rssValues.extend((self.computeRSS(t1), self.computeRSS(t2)))
-		chunks.extend((t1, t2))
 
-		# find min rss 
-		self.min_rss = numpy.argmin(rssValues)
-		self.min_chunk = chunks[self.min_rss]
+		min_rss = numpy.argmin(combinedRss)
+		nodes[min_rss].printNodeFeature()
 
-		return self.recursiveSplit (self.min_chunk, count)
-		
+		return self.recursiveSplit(nodes[min_rss].getLeft()), self.recursiveSplit(nodes[min_rss].getRight())
+
+
+
+
+
+
+class node(object):
+	def __init__(self, left, right, feature):
+		self.splitVal = feature
+		self.left = left
+		self.right = right
+	def getLeft(self):
+		return self.left
+	def getRight(self):
+		return self.right
+	def setLeft(self, chunk):
+		self.left = chunk
+	def setRight(self, chunk):
+		self.right = chunk
+	def setSplitFeature (self, feature):
+		self.splitVal = feature
+	def getSplitFeature (self):
+		return self.splitVal
+	def printNodeFeature(self):
+		print(self.splitVal)
+
 
 
 def main ():
@@ -81,10 +104,8 @@ def main ():
 	# Create an object for the Utils class with dataset path and target to predict. 
 	util = Utils(DATASET, 'Sales')
 	train, test = util.process(0.8)
-
-	util.recursiveSplit(train, 0)
-	
-	# for testing - no RSS computation - directly use left or right traversal and find median at the end
+	util.recursiveSplit(train)
+	# pprint("Counter = {}".format(count))
 
 		
 if __name__ == '__main__':
