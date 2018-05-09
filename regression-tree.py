@@ -5,7 +5,7 @@ from sklearn.metrics import mean_squared_error
 
 pd.set_option('expand_frame_repr', False)
 
-MAX_HEIGHT = 5
+MAX_HEIGHT = 4
 
 
 
@@ -16,8 +16,10 @@ class Utils(object):
 		self.target = targets
 		self.columnlist = ["CompPrice",  "Income",  "Advertising",  "Population",  "Price",  "Age", "Education"]
 		self.alpha = 0.25
-		self.height = 0
-		# self.baseNode = node()
+		self.height = 1
+		self.bestSplits = list()
+		self.path = []
+		self.leaves = []
 
 	def process (self, training_set_size):
 		# edge case -- 1
@@ -44,16 +46,26 @@ class Utils(object):
 		predicted_target = self.computeTarget(chunk)
 		for index, row in chunk.iterrows():
 			rss += numpy.power((row[self.target] - predicted_target), 2)
-		return rss 
+		return rss
+
+	computeMSE = lambda self, actual, pred : mean_squared_error(actual, pred)
+	pathTraversed = lambda self : self.bestSplits
 
 	def recursiveSplit (self, chunk):
 
 		self.height += 1
-		# define stopping condition 
-		if chunk.shape[0] < (0.05 * self.dataset.shape[0]) or self.height == MAX_HEIGHT or chunk.empty:
+		# define stopping conditions
+		if chunk.shape[0] < (0.10 * self.dataset.shape[0]):
+
+			self.leaves.append(self.computeTarget(chunk))
 			return 0
 
-		random.shuffle(self.columnlist)
+		if self.height == MAX_HEIGHT:
+
+			self.leaves.append(self.computeTarget(chunk))
+			return 0
+
+
 		combinedRss = []
 		nodes = []
 		for feature in self.columnlist:
@@ -63,13 +75,16 @@ class Utils(object):
 			single_node = node(chunk1, chunk2, feature)
 			nodes.append(single_node)
 
-
+		# returns the split with lowest RSS value. 
 		min_rss = numpy.argmin(combinedRss)
-		nodes[min_rss].printNodeFeature()
+		# nodes[min_rss].printNodeFeature()
+		self.bestSplits.append(nodes[min_rss].getSplitFeature())
+		print("At level {}, the least RSS is for split at : {}".format(self.height, nodes[min_rss].getSplitFeature()))
+		self.recursiveSplit(nodes[min_rss].getLeft())
+		self.recursiveSplit(nodes[min_rss].getRight())
+		return self.bestSplits, self.leaves
 
-		return self.recursiveSplit(nodes[min_rss].getLeft()), self.recursiveSplit(nodes[min_rss].getRight())
-
-
+	
 
 
 
@@ -104,8 +119,9 @@ def main ():
 	# Create an object for the Utils class with dataset path and target to predict. 
 	util = Utils(DATASET, 'Sales')
 	train, test = util.process(0.8)
-	util.recursiveSplit(train)
-	# pprint("Counter = {}".format(count))
+	path, leaves = util.recursiveSplit(train)
+	# pprint(util.pathTraversed())
+	pprint(leaves)
 
 		
 if __name__ == '__main__':
