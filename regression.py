@@ -64,24 +64,23 @@ def buildTree(root, depth):
 		return 
 
 	if root['left'].empty or root['right'].empty:
+		# MAKES THIS THE LEAF NODE AND SETS ITS VALUE TO THE PREDICTION
 		root['lleaf'] = True
 		root['rleaf'] = True
-
-		# replacing data with median leaf values - predictions
 		root['left'] = leaf(root['left'])
 		root['right'] = leaf(root['right'])
+		return 
 
 	if depth == MAX_HEIGHT:
+		# MAKES THIS THE LEAF NODE AND SETS ITS VALUE TO THE PREDICTION
 		root['lleaf'] = True
 		root['rleaf'] = True
-
-		# replacing data with median leaf values - predictions
 		root['left'] = leaf(root['left'])
 		root['right'] = leaf(root['right'])
-
 		return
 
 	if root['left'].shape[0] < (TRAINING_SIZE * 0.10):
+		# MAKES THIS THE LEAF NODE AND SETS ITS VALUE TO THE PREDICTION
 		root['lleaf'] = True
 		root['left'] = leaf(root['left'])
 		return
@@ -91,6 +90,7 @@ def buildTree(root, depth):
 		root['lleaf'] = True
 
 	if root['right'].shape[0] < (TRAINING_SIZE * 0.10):
+		# MAKES THIS THE LEAF NODE AND SETS ITS VALUE TO THE PREDICTION
 		root['rleaf'] = True
 		root['right'] = leaf(root['right'])
 		return 
@@ -101,6 +101,8 @@ def buildTree(root, depth):
 
 
 def predict(tree, example):
+
+	# TRAVERSES A TREE WITH AN EXAMPLE FROM TEST DATA AND SPITS OUT A PREDICTION
 
 	feature = tree['feature']
 	value = tree['value']
@@ -131,12 +133,13 @@ def decisionTree(train_data, test_data):
 
 	# pprint(mean_squared_error(actual, predictions))
 	pprint("The R2 score for this tree = {}".format(r2_score(actual, predictions)))
-	pprint("The mean squared error for this tree = {}".format(mean_squared_error(actual, predictions)))
+	# pprint("The mean squared error for this tree = {}".format(mean_squared_error(actual, predictions)))
 	return mean_squared_error(actual, predictions)
 
 
 
 def main ():
+
 	data = readCSV(FILE)
 	train_dataset, test_data = numpy.split(data, [int(len(data) * 0.8)])
 	# mse = decisionTree(train_dataset, test_data)
@@ -144,13 +147,16 @@ def main ():
 	# BAGGING 
 	# collecting results from various trees. 
 	for _ in range(10):
+		
+		# RANDOMIZING EVERY TIME TO SIMULATE DIFFERENT TREES
+		train_dataset = train_dataset.sample(frac = 1)
 		mses.append(decisionTree(train_dataset, test_data))
 
 	pprint(numpy.mean(mses))
 
 	# RANDOM FOREST
 
-	
+
 
 
 
