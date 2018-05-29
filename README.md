@@ -1,2 +1,25 @@
 # decision-trees-carseat
 A decision tree implementation for the carseat sales dataset from Kaggle. 
+
+# Data description
+* Sales - Unit sales (in thousands) at each location
+* CompPrice - Price charged by competitor at each location
+* Income - Community income level (in thousands of dollars)
+* Advertising - Local advertising budget for company at each location (in thousands of dollars)
+* Population - Population size in region (in thousands)
+* Price - Price company charges for car seats at each site
+* ShelveLoc - A factor with levels Bad, Good and Medium indicating the quality of the shelving location for the car seats at each site
+* Age - Average age of the local population
+* Education - Education level at each location
+* Urban - A factor with levels No and Yes to indicate whether the store is in an urban or rural location
+* US - A factor with levels No and Yes to indicate whether the store is in the US or not
+
+# Algorithms explored
+
+* Recursive binary splitting 
+* Categorical decision making
+* Regression
+* Reservoir sampling
+* Bagging/ensemble
+
+# WIP
